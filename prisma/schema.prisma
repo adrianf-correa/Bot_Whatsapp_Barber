@@ -1,0 +1,50 @@
+// Prisma Schema para Bot de Agendamento via WhatsApp
+// Documentação: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Representa o cliente atendido pelo bot no WhatsApp
+model Client {
+  id           String        @id @default(uuid())
+  name         String
+  phone        String        @unique // Identificador único (JID do WhatsApp ou número formatado)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
+
+  @@map("clients")
+}
+
+/// Representa um agendamento de serviço realizado
+model Appointment {
+  id          String   @id @default(uuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  serviceName String
+  dateTime    DateTime // Data e hora de início do agendamento
+  status      String   @default("CONFIRMED") // PENDING | CONFIRMED | CANCELED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([dateTime])
+  @@index([clientId])
+  @@map("appointments")
+}
+
+/// Catálogo de serviços oferecidos pela barbearia/salão
+model Service {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  durationMinutes Int      @default(60)
+  price           Float
+  createdAt       DateTime @default(now())
+
+  @@map("services")
+}
